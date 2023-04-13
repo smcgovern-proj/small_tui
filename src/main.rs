@@ -3,12 +3,12 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use std::{io, thread, time::{Duration, Instant}};
+use std::{io, time::{Duration, Instant}, sync::mpsc, thread};
 use tui::{
     backend::{CrosstermBackend, Backend},
     layout::{Constraint, Direction, Layout},
-    style::{Color, Modifier, Style},
-    widgets::{BarChart, Block, Borders, Widget},
+    style::{Color, Style},
+    widgets::{BarChart, Block, Borders},
     Terminal,
     Frame,
 };
@@ -50,6 +50,10 @@ fn main() -> Result<(), io::Error> {
     // setup app
     let tick_rate = Duration::from_millis(250);
     let app = App::new();
+
+    
+
+
     let res = run_app(&mut terminal, app, tick_rate);
     if let Err(err) = res {
         println!("{:?}", err);
@@ -73,6 +77,9 @@ fn run_app<B: Backend>(
     mut app: App,
     tick_rate: Duration
 ) -> io::Result<()> {
+    
+    // let (tx, rx) = mpsc::channel();
+    // thread::spawn();
     let mut last_tick = Instant::now();
     loop {
         terminal.draw(|f| ui(f, &app))?;
@@ -87,10 +94,12 @@ fn run_app<B: Backend>(
                 }
             }
         }
+        
         if last_tick.elapsed() >= tick_rate {
             app.on_tick();
             last_tick = Instant::now();
         }
+
     }
 }
 
@@ -105,14 +114,14 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &App) {
         ])
         .split(f.size());
     
+    // specify chart
     let barchart = BarChart::default()
         .block(Block::default().title("Sample Latencies").borders(Borders::ALL))
         .data(&app.data)
         .bar_width(9)
         .bar_style(Style::default().fg(Color::Yellow))
-        .value_style(Style::default().fg(Color::Black));
+        .value_style(Style::default().fg(Color::Black).bg(Color::Yellow));
 
     f.render_widget(barchart, chunks[0]);
-
 }
 
